@@ -59,8 +59,17 @@ for node in gff:
         strand = feature.location.strand
         feature_seq = seq[start:end]
         feature_id = feature.id
-        os.system('blastn -task blastn -max_target_seqs 1 -outfmt 6 -query <(echo -e ">' + id + '\n' + feature_seq + '") -db blastdb -out blast_results/' + id + '_results.out')
-        results = open('blast_results/' + id + '_results.out', 'r').readline().split('\t')
+        os.system('touch blast_results/' + feature_id + '_results.out')
+        os.system('touch query.fasta')
+        # print('echo -e >' + feature_id + '\n' + str(feature_seq))
+        os.system('echo -e ">' + feature_id + '\n' + str(feature_seq) + '"')
+        os.system('cat query.fasta')
+# os.system("blastn -task blastn -max_target_seqs 1 -outfmt 6 -query <(echo -e '>" + id + "\n" + str(feature_seq) + "') -db blastdb -out blast_results/" + id + "_results.out")
+        command = 'blastn -task blastn -max_target_seqs 1 -outfmt 6 -query query.fasta -db blastdb -out blast_results/' + feature_id + '_results.out'
+        # print(command)
+        os.system(command)
+        os.system('rm query.fasta')
+        results = open('blast_results/' + feature_id + '_results.out', 'r').readline().split('\t')
         pident = float(results[2])
         if pident > 90:
             length = int(results[3])
