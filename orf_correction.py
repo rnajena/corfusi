@@ -47,18 +47,33 @@ in_handle.close()
 # os.system('makeblastdb -in' +  hybrid + ' -parse_seqids -dbtype nucl -out' + 'blastdb')
 
 
-############### ... ###############
-# for node in gff:
-#     id = node.id
-#     seq = node.seq
-#     for feature in node.features:
-#         start = feature.location.start
-#         end = feature.location.end
-#         strand = feature.location.strand
-#         feature_seq = seq[start:end]
-#         id = feature.id
-#         os.system('blastn -task blastn -max_target_seqs 1 -outfmt 6 -query <(echo -e ">' + id + '\n' + feature_seq + '") -db blastdb -out blast_results/' + id + '_results.out')
-#         results = open('blast_results/' + id + '_results.out', 'r')
-#         print(results[0])
-#         break
-#     break
+############## ... ###############
+outfile = open('outfile', 'w')
+outfile.write('id\tipdent\tqcov\tscov')
+for node in gff:
+    id = node.id
+    seq = node.seq
+    for feature in node.features:
+        start = feature.location.start
+        end = feature.location.end
+        strand = feature.location.strand
+        feature_seq = seq[start:end]
+        feature_id = feature.id
+        os.system('blastn -task blastn -max_target_seqs 1 -outfmt 6 -query <(echo -e ">' + id + '\n' + feature_seq + '") -db blastdb -out blast_results/' + id + '_results.out')
+        results = open('blast_results/' + id + '_results.out', 'r').readline().split('\t')
+        pident = float(results[2])
+        if pident > 90:
+            length = int(results[3])
+            qcov = length / (int(results[7]) - int(results[6]) + 1)
+            scov = length /(int(results[9]) - int(results[8]) + 1)
+            outfile.write(feature_id + '\t' + str(pident) + '\t' + str(qcov) + '\t' + str(scov))
+outfile.close()
+
+
+# results = open('C:/Users/sandr/Dropbox/Master/paper/11DD0261/results.out', 'r').readline().split('\t')
+# pident = float(results[2])
+# length = int(results[3])
+# qcov = length / (int(results[7]) - int(results[6]) + 1)
+# scov = length /(int(results[9]) - int(results[8]) + 1) 
+# print(results)
+# print(pident, qcov, scov)
