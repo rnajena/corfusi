@@ -28,8 +28,9 @@ for seq_record in SeqIO.parse(fasta_file, "fasta"):
 
 ############### load gff ###############
 in_handle = open(gff_file)
+limit_info = dict(gff_source=["Prodigal:002006"])
 gff = []
-for rec in GFF.parse(in_handle):
+for rec in GFF.parse(in_handle, limit_info=limit_info):
     if len(rec.features) > 0:
         gff.append(rec)
 in_handle.close()
@@ -42,7 +43,7 @@ in_handle.close()
 
 ############## ... ###############
 outfile = open('outfile', 'w')
-outfile.write('id\tipdent\tqcov\tscov')
+outfile.write('id\tipdent\tqcov\tscov\tmm\tgap\n')
 for node in gff:
     id = node.id
     seq = node.seq
@@ -56,17 +57,19 @@ for node in gff:
         os.system('touch query.fasta')
         os.system('echo ">' + feature_id + '\n' + str(feature_seq) + '" >> query.fasta')
         
-        os.system('blastn -task blastn -max_target_seqs 1 -outfmt 6 -query query.fasta -db blastdb -out blast_results/' + feature_id + '_results.out')
+        os.system('blastn -task blastn -max_target_seqs 1 -outfmt 6 -query query.fasta -db blastdb -out blastn/' + feature_id + '_results.out')
         
-        results = open('blast_results/' + feature_id + '_results.out', 'r').readline().split('\t')
-        os.system('touch blast_results/' + feature_id + '_results.out')
+        results = open('blastn/' + feature_id + '_results.out', 'r').readline().split('\t')
         
-        pident = float(results[2])
+        if len(results) > 1:
+            pident = float(results[2])
+        else: pident = 0
+        
         if pident > 90:
             length = int(results[3])
             qcov = length / (int(results[7]) - int(results[6]) + 1)
             scov = length /(int(results[9]) - int(results[8]) + 1)
-            outfile.write(feature_id + '\t' + str(pident) + '\t' + str(qcov) + '\t' + str(scov))
+            outfile.write(feature_id + '\t' + str(pident) + '\t' + str(qcov) + '\t' + str(scov) + '\t' + str(results[4]) + '\t' + str(results[5]) + '\n')
         
         os.system('rm query.fasta')
 
@@ -89,3 +92,13 @@ outfile.close()
 # scov = length /(int(results[9]) - int(results[8]) + 1) 
 # print(results)
 # print(pident, qcov, scov)
+
+# file = open('outfile', 'r')
+# filter = []
+# for line in file:
+#         l = line.split('\t')
+#         if l[2] != '1.0':
+#                 filter.append(l)
+
+# for elem in filter:
+#         print(elem)
