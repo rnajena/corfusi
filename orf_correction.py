@@ -89,29 +89,22 @@ for node in gff:
             length = int(results[3])
             qcov = length / (int(results[7]) - int(results[6]) + 1)
             scov = length /(int(results[9]) - int(results[8]) + 1)
-            outfile.write(id + '\t' + feature_id + '\t' + str(feature.location) + '\t' + str(pident) + '\t' + str(qcov) + '\t' + str(scov) + '\t' + str(results[4]) + '\t' + str(results[5]) + '\n')
-            candidates.append([node, feature_id, feature.location, pident, qcov, scov, results[4], results[5]])
+
+            ############## filter candidates ###############
+            if qcov != 1.0 or int(results[4]) != 0 or int(results[5]) != 0:
+                outfile.write(id + '\t' + feature_id + '\t' + str(feature.location) + '\t' + str(pident) + '\t' + str(qcov) + '\t' + str(scov) + '\t' + str(results[4]) + '\t' + str(results[5]) + '\n')
+                candidates.append([node, feature_id, feature.location, pident, qcov, scov, int(results[4]), int(results[5])])
 
         os.system('rm query.fasta')
 
 outfile.close()
 
 
-############## filter candidates ###############
-# file = open('outfile', 'r')
-filter = []
-for elem in candidates:
-    if elem[4] != 1.0 or elem[6] != 0 or elem[7] != 0:
-        filter.append(elem)
-
-print(filter)
-
-
 ############## extract up and downstream region ###############
-for elem in filter:
+for elem in candidates:
     start = elem[2].start
-    stop = elem[2].stop
+    end = elem[2].end
     upstream = elem[0].seq[start-t:start]
-    downstream = elem[0].seq[stop+1:stop+t+1]
-
+    downstream = elem[0].seq[end+1:end+t+1]
+    print(len(upstream), len(downstream))
     # blast?
