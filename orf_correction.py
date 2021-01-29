@@ -25,9 +25,8 @@ for opt, arg in opts:
     elif opt in ("-g", "--gff"):
         gff_file = arg
     elif opt in ("-t", "--threshold"):
-        t = arg
+        t = int(arg)
 
-print(fasta_file, gff_file, t)
 
 #############################################################################
 ### ORF correction of bacterial genomes using short and hybrid assemblies ###
@@ -102,9 +101,11 @@ outfile.close()
 
 ############## extract up and downstream region ###############
 for elem in candidates:
-    start = elem[2].start
-    end = elem[2].end
+    start = int(elem[2].start)
+    end = int(elem[2].end)
     upstream = elem[0].seq[start-t:start]
     downstream = elem[0].seq[end+1:end+t+1]
-    print(len(upstream), len(downstream))
+    
+    if len(upstream) == 50 and len(downstream) == 50:
+        pass
     # blast?
