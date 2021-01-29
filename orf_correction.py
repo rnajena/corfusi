@@ -43,7 +43,7 @@ in_handle.close()
 
 ############## find candidates ###############
 outfile = open('outfile', 'w')
-outfile.write('contig\tid\tipdent\tqcov\tscov\tmm\tgap\n')
+outfile.write('contig\tid\tid_pos\tipdent\tqcov\tscov\tmm\tgap\n')
 for node in gff:
     id = node.id
     seq = node.seq
@@ -69,20 +69,18 @@ for node in gff:
             length = int(results[3])
             qcov = length / (int(results[7]) - int(results[6]) + 1)
             scov = length /(int(results[9]) - int(results[8]) + 1)
-            outfile.write(id + '\t' + feature_id + '\t' + str(pident) + '\t' + str(qcov) + '\t' + str(scov) + '\t' + str(results[4]) + '\t' + str(results[5]) + '\n')
+            outfile.write(id + '\t' + feature_id + '\t' + str(feature.location) + '\t' + str(pident) + '\t' + str(qcov) + '\t' + str(scov) + '\t' + str(results[4]) + '\t' + str(results[5]) + '\n')
         
         os.system('rm query.fasta')
 
 outfile.close()
 
 ############## filter candidates ###############
-# file = open('outfile', 'r')
-# filter = []
-# for line in file:
-#         l = line.split('\t')
-#         if l[2] != '1.0' or l[3] != 0 or l[4] != 0:
-#                 filter.append(l)
+file = open('outfile', 'r')
+filter = []
+for line in file:
+    l = line.split('\t')
+    if l[4] != '1.0' or l[6] != '0' or l[7][0] != '0':
+        filter.append(l)
 
-# candidates = []
-# for elem in filter:
-    
+print(filter)
