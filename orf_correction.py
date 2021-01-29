@@ -5,14 +5,33 @@ from BCBio import GFF
 import pprint
 from BCBio.GFF import GFFExaminer
 import os
-import sys
+import sys, getopt
+
+fasta_file = ''
+gff_file = ''
+t = 100
+
+try:
+    opts, args = getopt.getopt(sys.argv[1:],"hf:g:t:",["fasta=","gff=", "threshold="])
+except getopt.GetoptError:
+    print('orf_correction.py -f <fastafile> -g <gfffile> -t <threshold for up-/downstream region>')
+    sys.exit(2)
+for opt, arg in opts:
+    if opt == '-h':
+        print('orf_correction.py -f <fastafile> -g <gfffile> -t <threshold for up-/downstream region>')
+        sys.exit()
+    elif opt in ("-f", "--fasta"):
+        fasta_file = arg
+    elif opt in ("-g", "--gff"):
+        gff_file = arg
+    elif opt in ("-t", "--threshold"):
+        t = arg
+
+print(fasta_file, gff_file, t)
 
 #############################################################################
 ### ORF correction of bacterial genomes using short and hybrid assemblies ###
 #############################################################################
-
-fasta_file = sys.argv[1]
-gff_file = sys.argv[2]
 
 ############### examining gff ###############
 # examiner = GFFExaminer()
@@ -20,7 +39,7 @@ gff_file = sys.argv[2]
 # in_handle.close()
 
 
-############### load fasta ############### 
+############## load fasta ############### 
 seq = []
 for seq_record in SeqIO.parse(fasta_file, "fasta"):
     seq.append(seq_record)
@@ -44,6 +63,7 @@ in_handle.close()
 ############## find candidates ###############
 outfile = open('outfile', 'w')
 outfile.write('contig\tid\tid_pos\tipdent\tqcov\tscov\tmm\tgap\n')
+candidates = []
 for node in gff:
     id = node.id
     seq = node.seq
@@ -51,7 +71,7 @@ for node in gff:
         start = feature.location.start
         end = feature.location.end
         strand = feature.location.strand
-        feature_seq = seq[start:end]
+        feature_seq = seq[start:end+1]
         feature_id = feature.id
         
         os.system('touch query.fasta')
@@ -70,17 +90,28 @@ for node in gff:
             qcov = length / (int(results[7]) - int(results[6]) + 1)
             scov = length /(int(results[9]) - int(results[8]) + 1)
             outfile.write(id + '\t' + feature_id + '\t' + str(feature.location) + '\t' + str(pident) + '\t' + str(qcov) + '\t' + str(scov) + '\t' + str(results[4]) + '\t' + str(results[5]) + '\n')
-        
+            candidates.append([node, feature_id, feature.location, pident, qcov, scov, results[4], results[5]])
+
         os.system('rm query.fasta')
 
 outfile.close()
 
+
 ############## filter candidates ###############
-file = open('outfile', 'r')
+# file = open('outfile', 'r')
 filter = []
-for line in file:
-    l = line.split('\t')
-    if l[4] != '1.0' or l[6] != '0' or l[7][0] != '0':
-        filter.append(l)
+for elem in candidates:
+    if elem[4] != 1.0 or elem[6] != 0 or elem[7] != 0:
+        filter.append(elem)
 
 print(filter)
+
+
+############## extract up and downstream region ###############
+for elem in filter:
+    start = elem[2].start
+    stop = elem[2].stop
+    upstream = elem[0].seq[start-t:start]
+    downstream = elem[0].seq[stop+1:stop+t+1]
+
+    # blast?
