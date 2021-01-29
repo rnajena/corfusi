@@ -11,13 +11,13 @@ import sys
 ### ORF correction of bacterial genomes using short and hybrid assemblies ###
 #############################################################################
 
+fasta_file = sys.argv[1]
+gff_file = sys.argv[2]
+
 ############### examining gff ###############
 # examiner = GFFExaminer()
 # pprint.pprint(examiner.available_limits(in_handle))
 # in_handle.close()
-
-fasta_file = sys.argv[1]
-gff_file = sys.argv[2]
 
 
 ############### load fasta ############### 
@@ -41,9 +41,9 @@ in_handle.close()
 # os.system('makeblastdb -in' +  hybrid + ' -parse_seqids -dbtype nucl -out' + 'blastdb')
 
 
-############## ... ###############
+############## find candidates ###############
 outfile = open('outfile', 'w')
-outfile.write('id\tipdent\tqcov\tscov\tmm\tgap\n')
+outfile.write('contig\tid\tipdent\tqcov\tscov\tmm\tgap\n')
 for node in gff:
     id = node.id
     seq = node.seq
@@ -69,36 +69,20 @@ for node in gff:
             length = int(results[3])
             qcov = length / (int(results[7]) - int(results[6]) + 1)
             scov = length /(int(results[9]) - int(results[8]) + 1)
-            outfile.write(feature_id + '\t' + str(pident) + '\t' + str(qcov) + '\t' + str(scov) + '\t' + str(results[4]) + '\t' + str(results[5]) + '\n')
+            outfile.write(id + '\t' + feature_id + '\t' + str(pident) + '\t' + str(qcov) + '\t' + str(scov) + '\t' + str(results[4]) + '\t' + str(results[5]) + '\n')
         
         os.system('rm query.fasta')
 
 outfile.close()
 
-
-
-# h = gff[0]
-# f = h.features
-# print(f[0].id)
-# print(f[0])
-# print(f[0].location.start) # start end strand
-# print(h.seq[f[0].location.start:f[0].location.end])
-
-
-# results = open('C:/Users/sandr/Dropbox/Master/paper/11DD0261/results.out', 'r').readline().split('\t')
-# pident = float(results[2])
-# length = int(results[3])
-# qcov = length / (int(results[7]) - int(results[6]) + 1)
-# scov = length /(int(results[9]) - int(results[8]) + 1) 
-# print(results)
-# print(pident, qcov, scov)
-
+############## filter candidates ###############
 # file = open('outfile', 'r')
 # filter = []
 # for line in file:
 #         l = line.split('\t')
-#         if l[2] != '1.0':
+#         if l[2] != '1.0' or l[3] != 0 or l[4] != 0:
 #                 filter.append(l)
 
+# candidates = []
 # for elem in filter:
-#         print(elem)
+    
