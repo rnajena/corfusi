@@ -39,9 +39,7 @@ for opt, arg in opts:
 
 
 ############## load fasta ############### 
-seq = []
-for seq_record in SeqIO.parse(fasta_file, "fasta"):
-    seq.append(seq_record)
+hybrid_fasta = SeqIO.to_dict(SeqIO.parse(fasta_file, "fasta"))
 
 
 ############### load gff ###############
@@ -100,7 +98,6 @@ outfile.close()
 
 
 ############## extract up and downstream region ###############
-# hybrid_new = 
 for elem in candidates:
     start = int(elem[2].start)
     end = int(elem[2].end)
@@ -120,13 +117,11 @@ for elem in candidates:
                 up_down.append(line.split('\t'))
                 break
         
-        if len(up_down) == 2 and abs(int(up_down[0][9]) - int(up_down[1][8]) -1) <= (end - start + 1) * 1.2:
-            sr_gene = elem[0].seq[start:end+1]
-            
+        h_start = int(up_down[0][9])
+        h_end = int(up_down[1][8])
 
+        if len(up_down) == 2 and up_down[0][1] == up_down[1][1] and abs(h_start - h_end -1) <= (end - start +1) * 1.2:
+            sr_gene = elem[0].seq[start:end+1]
+            hybrid_fasta[up_down[0][1]].seq = hybrid_fasta[up_down[0][1]].seq[:h_start] + sr_gene + hybrid_fasta[up_down[0][1]].seq[h_end+1:]
 
         os.system('rm query.fasta')
-    # blast gegen hybrid 
-    # geht auch zusammen = beide in eine query
-    # seq_len zwischen up und down überprüfen       seq_len mind genlen     max. genlen + 20% oder ??? nt
-    # seq in hybrid einsetzen
