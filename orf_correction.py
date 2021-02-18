@@ -107,5 +107,13 @@ for elem in candidates:
     downstream = elem[0].seq[end+1:end+t+1]
     
     if len(upstream) == 50 and len(downstream) == 50:
-        pass
-    # blast?
+        os.system('touch query.fasta')
+        os.system('echo ">upstream\n' + str(upstream) + '\n>downstream\n' + str(downstream) + '" >> query.fasta')
+
+        os.system('blastn -task blastn -max_target_seqs 1 -outfmt 6 -query query.fasta -db blastdb -out blastn2/' + feature_id + '_results.out')
+
+        os.system('rm query.fasta')
+    # blast gegen hybrid 
+    # geht auch zusammen = beide in eine query
+    # seq_len zwischen up und down überprüfen       seq_len mind genlen     max. genlen + 20% oder ??? nt
+    # seq in hybrid einsetzen
