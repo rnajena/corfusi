@@ -106,15 +106,23 @@ for elem in candidates:
     upstream = elem[0].seq[start-t:start]
     downstream = elem[0].seq[end+1:end+t+1]
     
-    # print(len(upstream), len(downstream))
-    
     if len(upstream) == t and len(downstream) == t:
         os.system('touch query.fasta')
         os.system('echo ">upstream\n' + str(upstream) + '\n>downstream\n' + str(downstream) + '" >> query.fasta')
 
-        # os.system('cat query.fasta')
-        print('blastn -task blastn -outfmt 6 -max_target_seqs 1 -query query.fasta -db blastdb -out blastn2/' + elem[1] + '_results.out')
         os.system('blastn -task blastn -max_target_seqs 1 -outfmt 6 -query query.fasta -db blastdb -out blastn2/' + elem[1] + '_results.out')
+
+        results = open('blastn2/' + elem[1] + '_results.out', 'r').readlines()
+        up_down = [results[0].split('\t')]
+        for elem in results:
+            if elem[0:10] == 'downstream':
+                up_down.append(elem.split('\t'))
+                break
+        
+        if abs(up_down[0][9] - up_down[1][8] -1) <= (end - start + 1) * 1.2:
+            sr_gene = elem[0].seq[start:end+1]
+            print(sr_gene)
+
 
         os.system('rm query.fasta')
     # blast gegen hybrid 
