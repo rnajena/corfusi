@@ -117,11 +117,23 @@ for elem in candidates:
                 up_down.append(line.split('\t'))
                 break
         
-        h_start = int(up_down[0][9])
-        h_end = int(up_down[1][8])
+        if len(up_down) == 2:
+            h_start = int(up_down[0][9])
+            h_end = int(up_down[1][8])
 
-        if len(up_down) == 2 and up_down[0][1] == up_down[1][1] and abs(h_start - h_end -1) <= (end - start +1) * 1.2:
-            sr_gene = elem[0].seq[start:end+1]
-            hybrid_fasta[up_down[0][1]].seq = hybrid_fasta[up_down[0][1]].seq[:h_start] + sr_gene + hybrid_fasta[up_down[0][1]].seq[h_end+1:]
+            if up_down[0][1] == up_down[1][1] and abs(h_start - h_end -1) <= (end - start +1) * 1.2:
+                sr_gene = elem[0].seq[start:end+1]
+
+                print(hybrid_fasta[up_down[0][1]].seq[h_start-5:h_start+6], hybrid_fasta[up_down[0][1]].seq[h_start-5:h_start])
+
+                hybrid_fasta[up_down[0][1]].seq = hybrid_fasta[up_down[0][1]].seq[:h_start] + sr_gene + hybrid_fasta[up_down[0][1]].seq[h_end+1:]
+                
+                print(sr_gene[:6])
+                print(hybrid_fasta[up_down[0][1]].seq[h_start-5:h_start+6], hybrid_fasta[up_down[0][1]].seq[h_start-5:h_start])
+                print()
 
         os.system('rm query.fasta')
+
+
+with open('11DD0261_new.fasta', 'w') as handle:
+    SeqIO.write(hybrid_fasta.values(), handle, 'fasta')
