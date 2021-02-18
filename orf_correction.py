@@ -71,10 +71,13 @@ for node in gff:
         feature_seq = seq[start:end+1]
         feature_id = feature.id
         
+        ### create query ###
         os.system('touch query.fasta')
         os.system('echo ">' + feature_id + '\n' + str(feature_seq) + '" >> query.fasta')
         
+        ### blastn ###
         os.system('blastn -task blastn -outfmt 6 -max_target_seqs 1 -query query.fasta -db blastdb -out blastn/' + feature_id + '_results.out')
+        os.system('rm query.fasta')
         
         results = open('blastn/' + feature_id + '_results.out', 'r').readline().split('\t')
         
@@ -87,53 +90,53 @@ for node in gff:
             qcov = length / (int(results[7]) - int(results[6]) + 1)
             scov = length /(int(results[9]) - int(results[8]) + 1)
 
-            ############## filter candidates ###############
+            #### filter candidates ###
             if qcov != 1.0 or int(results[4]) != 0 or int(results[5]) != 0:
                 outfile.write(id + '\t' + feature_id + '\t' + str(feature.location) + '\t' + str(pident) + '\t' + str(qcov) + '\t' + str(scov) + '\t' + str(results[4]) + '\t' + str(results[5]) + '\n')
                 candidates.append([node, feature_id, feature.location, pident, qcov, scov, int(results[4]), int(results[5])])
 
-        os.system('rm query.fasta')
-
 outfile.close()
 
 
-############## extract up and downstream region ###############
+############## update assembly sequence ###############
 for elem in candidates:
+    ### extract up and downstream region ###
     start = int(elem[2].start)
     end = int(elem[2].end)
     upstream = elem[0].seq[start-t:start]
     downstream = elem[0].seq[end+1:end+t+1]
     
+    ### check length of up and downstream region ###
     if len(upstream) == t and len(downstream) == t:
+        ### create query ###
         os.system('touch query.fasta')
         os.system('echo ">upstream\n' + str(upstream) + '\n>downstream\n' + str(downstream) + '" >> query.fasta')
 
+        ### blastn ###
         os.system('blastn -task blastn -max_target_seqs 1 -outfmt 6 -query query.fasta -db blastdb -out blastn2/' + elem[1] + '_results.out')
+        os.system('rm query.fasta')
 
         results = open('blastn2/' + elem[1] + '_results.out', 'r').readlines()
+        
         up_down = [results[0].split('\t')]
         for line in results:
             if line[0:10] == 'downstream':
                 up_down.append(line.split('\t'))
                 break
         
+        ### continue if up and downstream region matched ###
         if len(up_down) == 2:
             h_start = int(up_down[0][9])
             h_end = int(up_down[1][8])
 
+            ### filtering by length (20% longer than gene allowed) ###
             if up_down[0][1] == up_down[1][1] and abs(h_start - h_end -1) <= (end - start +1) * 1.2:
                 sr_gene = elem[0].seq[start:end+1]
 
-                print(hybrid_fasta[up_down[0][1]].seq[h_start-5:h_start+6], hybrid_fasta[up_down[0][1]].seq[h_start-5:h_start])
-
+                ### insert short-read gene in hybrid sequence ###
                 hybrid_fasta[up_down[0][1]].seq = hybrid_fasta[up_down[0][1]].seq[:h_start] + sr_gene + hybrid_fasta[up_down[0][1]].seq[h_end+1:]
-                
-                print(sr_gene[:6])
-                print(hybrid_fasta[up_down[0][1]].seq[h_start-5:h_start+6], hybrid_fasta[up_down[0][1]].seq[h_start-5:h_start])
-                print()
-
-        os.system('rm query.fasta')
 
 
+############## save new assembly ###############
 with open('11DD0261_new.fasta', 'w') as handle:
     SeqIO.write(hybrid_fasta.values(), handle, 'fasta')
