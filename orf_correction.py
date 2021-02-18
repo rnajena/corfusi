@@ -76,7 +76,7 @@ for node in gff:
         os.system('touch query.fasta')
         os.system('echo ">' + feature_id + '\n' + str(feature_seq) + '" >> query.fasta')
         
-        os.system('blastn -task blastn -max_target_seqs 1 -outfmt 6 -query query.fasta -db blastdb -out blastn/' + feature_id + '_results.out')
+        os.system('blastn -task blastn -outfmt 6 -max_target_seqs 1 -query query.fasta -db blastdb -out blastn/' + feature_id + '_results.out')
         
         results = open('blastn/' + feature_id + '_results.out', 'r').readline().split('\t')
         
@@ -106,11 +106,15 @@ for elem in candidates:
     upstream = elem[0].seq[start-t:start]
     downstream = elem[0].seq[end+1:end+t+1]
     
-    if len(upstream) == 50 and len(downstream) == 50:
+    # print(len(upstream), len(downstream))
+    
+    if len(upstream) == t and len(downstream) == t:
         os.system('touch query.fasta')
         os.system('echo ">upstream\n' + str(upstream) + '\n>downstream\n' + str(downstream) + '" >> query.fasta')
 
-        os.system('blastn -task blastn -max_target_seqs 1 -outfmt 6 -query query.fasta -db blastdb -out blastn2/' + feature_id + '_results.out')
+        # os.system('cat query.fasta')
+        print('blastn -task blastn -outfmt 6 -max_target_seqs 1 -query query.fasta -db blastdb -out blastn2/' + elem[1] + '_results.out')
+        os.system('blastn -task blastn -max_target_seqs 1 -outfmt 6 -query query.fasta -db blastdb -out blastn2/' + elem[1] + '_results.out')
 
         os.system('rm query.fasta')
     # blast gegen hybrid 
