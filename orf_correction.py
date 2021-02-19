@@ -58,8 +58,8 @@ in_handle.close()
 
 
 ############## find candidates ###############
-outfile = open('outfile', 'w')
-outfile.write('contig\tid\tid_pos\tipdent\tqcov\tscov\tmm\tgap\n')
+# outfile = open('outfile', 'w')
+# outfile.write('contig\tid\tid_pos\tipdent\tqcov\tscov\tmm\tgap\n')
 candidates = []
 for node in gff:
     id = node.id
@@ -92,10 +92,10 @@ for node in gff:
 
             #### filter candidates ###
             if qcov != 1.0 or int(results[4]) != 0 or int(results[5]) != 0:
-                outfile.write(id + '\t' + feature_id + '\t' + str(feature.location) + '\t' + str(pident) + '\t' + str(qcov) + '\t' + str(scov) + '\t' + str(results[4]) + '\t' + str(results[5]) + '\n')
+                #outfile.write(id + '\t' + feature_id + '\t' + str(feature.location) + '\t' + str(pident) + '\t' + str(qcov) + '\t' + str(scov) + '\t' + str(results[4]) + '\t' + str(results[5]) + '\n')
                 candidates.append([node, feature_id, feature.location, pident, qcov, scov, int(results[4]), int(results[5])])
 
-outfile.close()
+#outfile.close()
 
 
 ############## update assembly sequence ###############
@@ -139,18 +139,22 @@ for elem in up_down_all:
     h_start = int(elem[0][9]) + count
     h_end = int(elem[1][8]) + count
 
-    start = elem[3][2].start
-    end = elem[3][2].end
+    start = elem[2][2].start
+    end = elem[2][2].end
 
-    h_len = h_end - h_start -1
+    h_len = abs(h_end - h_start -1)
     sr_gene_len = end - start +1
+
+    # print(h_start, h_end)
+    # print(sr_gene_len, h_len, sr_gene_len - h_len)
 
     ### filtering by length (20% longer than gene allowed) ###
     if h_len <= sr_gene_len * 1.2 and h_len >= sr_gene_len * 0.8:
-        sr_gene = elem[0].seq[start:end+1]
+        print(elem[2][1])
+        sr_gene = elem[2][0].seq[start:end+1]
 
         ### insert short-read gene in hybrid sequence ###
-        hybrid_fasta[elem[0][1]].seq = hybrid_fasta[elem[0][1]].seq[:h_start] + sr_gene + hybrid_fasta[elem[0][1]].seq[h_end+1:]
+        hybrid_fasta[elem[0][1]].seq = hybrid_fasta[elem[0][1]].seq[:h_start+1] + sr_gene + hybrid_fasta[elem[0][1]].seq[h_end:]
 
         ### update index count ###
         if sr_gene_len != h_len:
@@ -158,5 +162,5 @@ for elem in up_down_all:
 
 
 ############## save new assembly ###############
-with open('11DD0261_new.fasta', 'w') as handle:
+with open('11DD0261_supernew.fasta', 'w') as handle:
     SeqIO.write(hybrid_fasta.values(), handle, 'fasta')
