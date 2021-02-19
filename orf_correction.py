@@ -131,25 +131,32 @@ for elem in candidates:
             
         up_down_pair = []
 
-
+### sort blast results by start position ###
 up_down_all.sort(key=lambda x: x[0][8])
 
+count = 0
 for elem in up_down_all:
-    print(elem[0])
-    print(elem[1])
-    print()
+    h_start = int(elem[0][9]) + count
+    h_end = int(elem[1][8]) + count
 
-# h_start = int(up_down[0][9])
-# h_end = int(up_down[1][8])
+    start = elem[3][2].start
+    end = elem[3][2].end
 
-### filtering by length (20% longer than gene allowed) ###
-# if abs(h_end - h_start -1) <= (end - start +1) * 1.2:
-#     sr_gene = elem[0].seq[start:end+1]
+    h_len = h_end - h_start -1
+    sr_gene_len = end - start +1
 
-    ### insert short-read gene in hybrid sequence ###
-    # hybrid_fasta[up_down[0][1]].seq = hybrid_fasta[up_down[0][1]].seq[:h_start] + sr_gene + hybrid_fasta[up_down[0][1]].seq[h_end+1:]
+    ### filtering by length (20% longer than gene allowed) ###
+    if h_len <= sr_gene_len * 1.2 and h_len >= sr_gene_len * 0.8:
+        sr_gene = elem[0].seq[start:end+1]
+
+        ### insert short-read gene in hybrid sequence ###
+        hybrid_fasta[elem[0][1]].seq = hybrid_fasta[elem[0][1]].seq[:h_start] + sr_gene + hybrid_fasta[elem[0][1]].seq[h_end+1:]
+
+        ### update index count ###
+        if sr_gene_len != h_len:
+            count += sr_gene_len - h_len
 
 
 ############## save new assembly ###############
-# with open('11DD0261_new.fasta', 'w') as handle:
-#     SeqIO.write(hybrid_fasta.values(), handle, 'fasta')
+with open('11DD0261_new.fasta', 'w') as handle:
+    SeqIO.write(hybrid_fasta.values(), handle, 'fasta')
