@@ -126,12 +126,12 @@ for elem in candidates:
                 break
         
         ### continue if up and downstream region matched ###
-        if len(up_down_pair) == 2 and up_down_pair[0][1] == up_down_pair[1][1]:
-            up_down_all.append((up_down_pair[0], up_down_pair[1]))
+        if len(up_down_pair) == 2 and up_down_pair[0][1] == up_down_pair[1][1] and int(up_down_pair[0][3]) == t and int(up_down_pair[1][3]) == t:
+            up_down_all.append((up_down_pair[0], up_down_pair[1], elem))
             
         up_down_pair = []
 
-# my_list.sort(key=lambda x: x[1])
+
 up_down_all.sort(key=lambda x: x[0][8])
 
 for elem in up_down_all:
@@ -143,7 +143,7 @@ for elem in up_down_all:
 # h_end = int(up_down[1][8])
 
 ### filtering by length (20% longer than gene allowed) ###
-# if abs(h_start - h_end -1) <= (end - start +1) * 1.2:
+# if abs(h_end - h_start -1) <= (end - start +1) * 1.2:
 #     sr_gene = elem[0].seq[start:end+1]
 
     ### insert short-read gene in hybrid sequence ###
