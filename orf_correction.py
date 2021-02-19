@@ -99,6 +99,7 @@ outfile.close()
 
 
 ############## update assembly sequence ###############
+up_down_all = []
 for elem in candidates:
     ### extract up and downstream region ###
     start = int(elem[2].start)
@@ -118,25 +119,37 @@ for elem in candidates:
 
         results = open('blastn2/' + elem[1] + '_results.out', 'r').readlines()
         
-        up_down = [results[0].split('\t')]
+        up_down_pair = [results[0].split('\t')]
         for line in results:
             if line[0:10] == 'downstream':
-                up_down.append(line.split('\t'))
+                up_down_pair.append(line.split('\t'))
                 break
         
         ### continue if up and downstream region matched ###
-        if len(up_down) == 2:
-            h_start = int(up_down[0][9])
-            h_end = int(up_down[1][8])
+        if len(up_down_pair) == 2 and up_down_pair[0][1] == up_down_pair[1][1]:
+            up_down_all.append((up_down_pair[0], up_down_pair[1]))
+            
+        up_down_pair = []
 
-            ### filtering by length (20% longer than gene allowed) ###
-            if up_down[0][1] == up_down[1][1] and abs(h_start - h_end -1) <= (end - start +1) * 1.2:
-                sr_gene = elem[0].seq[start:end+1]
+# my_list.sort(key=lambda x: x[1])
+up_down_all.sort(key=lambda x: x[0][8])
 
-                ### insert short-read gene in hybrid sequence ###
-                hybrid_fasta[up_down[0][1]].seq = hybrid_fasta[up_down[0][1]].seq[:h_start] + sr_gene + hybrid_fasta[up_down[0][1]].seq[h_end+1:]
+for elem in up_down_all:
+    print(elem[0])
+    print(elem[1])
+    print()
+
+# h_start = int(up_down[0][9])
+# h_end = int(up_down[1][8])
+
+### filtering by length (20% longer than gene allowed) ###
+# if abs(h_start - h_end -1) <= (end - start +1) * 1.2:
+#     sr_gene = elem[0].seq[start:end+1]
+
+    ### insert short-read gene in hybrid sequence ###
+    # hybrid_fasta[up_down[0][1]].seq = hybrid_fasta[up_down[0][1]].seq[:h_start] + sr_gene + hybrid_fasta[up_down[0][1]].seq[h_end+1:]
 
 
 ############## save new assembly ###############
-with open('11DD0261_new.fasta', 'w') as handle:
-    SeqIO.write(hybrid_fasta.values(), handle, 'fasta')
+# with open('11DD0261_new.fasta', 'w') as handle:
+#     SeqIO.write(hybrid_fasta.values(), handle, 'fasta')
