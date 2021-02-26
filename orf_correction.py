@@ -139,17 +139,16 @@ for elem in up_down_all:
     h_start = int(elem[0][9]) + count
     h_end = int(elem[1][8]) + count
 
+    if h_start > h_end: h_start, h_end = h_end, h_start
+
     start = elem[2][2].start
     end = elem[2][2].end
 
     h_len = abs(h_end - h_start -1)
     sr_gene_len = end - start +1
 
-    # print(h_start, h_end)
-    # print(sr_gene_len, h_len, sr_gene_len - h_len)
-
-    ### filtering by length (20% longer than gene allowed) ###
-    if h_len <= sr_gene_len * 1.2 and h_len >= sr_gene_len * 0.8:
+    ### filtering by length (20% longer or shorter than gene allowed) ###
+    if abs(h_len - sr_gene_len) < sr_gene_len * 0.2:
         print(elem[2][1])
         sr_gene = elem[2][0].seq[start:end+1]
 
@@ -162,5 +161,5 @@ for elem in up_down_all:
 
 
 ############## save new assembly ###############
-with open('11DD0261_supernew.fasta', 'w') as handle:
+with open('11DD0261_new.fasta', 'w') as handle:
     SeqIO.write(hybrid_fasta.values(), handle, 'fasta')
