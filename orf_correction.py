@@ -70,7 +70,7 @@ for node in gff:
         strand = feature.location.strand
         feature_seq = seq[start:end+1]
         feature_id = feature.id
-        
+
         ### create query ###
         os.system('touch query.fasta')
         os.system('echo ">' + feature_id + '\n' + str(feature_seq) + '" >> query.fasta')
@@ -134,6 +134,7 @@ for elem in candidates:
 ### sort blast results by start position ###
 up_down_all.sort(key=lambda x: x[0][8])
 
+
 count = 0
 for elem in up_down_all:
     h_start = int(elem[0][9]) + count
@@ -149,7 +150,6 @@ for elem in up_down_all:
 
     ### filtering by length (20% longer or shorter than gene allowed) ###
     if abs(h_len - sr_gene_len) < sr_gene_len * 0.2:
-        print(elem[2][1])
         sr_gene = elem[2][0].seq[start:end+1]
 
         ### insert short-read gene in hybrid sequence ###
@@ -160,6 +160,7 @@ for elem in up_down_all:
             count += sr_gene_len - h_len
 
 
+
 ############## save new assembly ###############
-with open('11DD0261_new.fasta', 'w') as handle:
-    SeqIO.write(hybrid_fasta.values(), handle, 'fasta')
+#with open('11DD0261_new.fasta', 'w') as handle:
+#    SeqIO.write(hybrid_fasta.values(), handle, 'fasta')
