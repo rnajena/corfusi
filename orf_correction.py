@@ -12,18 +12,20 @@ gff_file = ''
 t = 100
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:],"hf:g:t:",["fasta=","gff=", "threshold="])
+    opts, args = getopt.getopt(sys.argv[1:],"hf:g:t:o:",["fasta=","gff=", "threshold=", "output="])
 except getopt.GetoptError:
-    print('orf_correction.py -f <fastafile> -g <gfffile> -t <threshold for up-/downstream region>')
+    print('orf_correction.py -f <fasta file> -g <gff file> -t <threshold for up-/downstream region> -o <output file>')
     sys.exit(2)
 for opt, arg in opts:
     if opt == '-h':
-        print('orf_correction.py -f <fastafile> -g <gfffile> -t <threshold for up-/downstream region>')
+        print('orf_correction.py -f <fasta file> -g <gff file> -t <threshold for up-/downstream region> -o <output file>')
         sys.exit()
     elif opt in ("-f", "--fasta"):
         fasta_file = arg
     elif opt in ("-g", "--gff"):
         gff_file = arg
+    elif opt in ("-o", "--output"):
+        output = arg
     elif opt in ("-t", "--threshold"):
         t = int(arg)
 
@@ -53,8 +55,7 @@ in_handle.close()
 
 
 ############### makebladtdb ###############
-# hybrid = sys.argv[3]
-# os.system('makeblastdb -in' +  hybrid + ' -parse_seqids -dbtype nucl -out' + 'blastdb')
+os.system('makeblastdb -in' +  fasta_file + ' -parse_seqids -dbtype nucl -out hybrid_blastdb')
 
 
 ############## find candidates ###############
@@ -70,13 +71,13 @@ for node in gff:
         strand = feature.location.strand
         feature_seq = seq[start:end+1]
         feature_id = feature.id
-
+        
         ### create query ###
         os.system('touch query.fasta')
         os.system('echo ">' + feature_id + '\n' + str(feature_seq) + '" >> query.fasta')
         
         ### blastn ###
-        os.system('blastn -task blastn -outfmt 6 -max_target_seqs 1 -query query.fasta -db blastdb -out blastn/' + feature_id + '_results.out')
+        os.system('blastn -task blastn -outfmt 6 -max_target_seqs 1 -query query.fasta -db hybrid_blastdb -out blastn/' + feature_id + '_results.out')
         os.system('rm query.fasta')
         
         results = open('blastn/' + feature_id + '_results.out', 'r').readline().split('\t')
@@ -96,6 +97,7 @@ for node in gff:
                 candidates.append([node, feature_id, feature.location, pident, qcov, scov, int(results[4]), int(results[5])])
 
 #outfile.close()
+os.system('rm blastn/*')
 
 
 ############## update assembly sequence ###############
@@ -114,10 +116,10 @@ for elem in candidates:
         os.system('echo ">upstream\n' + str(upstream) + '\n>downstream\n' + str(downstream) + '" >> query.fasta')
 
         ### blastn ###
-        os.system('blastn -task blastn -max_target_seqs 1 -outfmt 6 -query query.fasta -db blastdb -out blastn2/' + elem[1] + '_results.out')
+        os.system('blastn -task blastn -max_target_seqs 1 -outfmt 6 -query query.fasta -db hybrid_blastdb -out blastn/' + elem[1] + '_results.out')
         os.system('rm query.fasta')
 
-        results = open('blastn2/' + elem[1] + '_results.out', 'r').readlines()
+        results = open('blastn/' + elem[1] + '_results.out', 'r').readlines()
         
         up_down_pair = [results[0].split('\t')]
         for line in results:
@@ -131,9 +133,10 @@ for elem in candidates:
             
         up_down_pair = []
 
+os.system('rm blastn/*')
+
 ### sort blast results by start position ###
 up_down_all.sort(key=lambda x: x[0][8])
-
 
 count = 0
 for elem in up_down_all:
@@ -160,7 +163,6 @@ for elem in up_down_all:
             count += sr_gene_len - h_len
 
 
-
 ############## save new assembly ###############
-#with open('11DD0261_new.fasta', 'w') as handle:
-#    SeqIO.write(hybrid_fasta.values(), handle, 'fasta')
+with open(output, 'w') as handle:
+    SeqIO.write(hybrid_fasta.values(), handle, 'fasta')
