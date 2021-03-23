@@ -1,11 +1,16 @@
 #!/usr/bin/python3
 
 from Bio import SeqIO
+from Bio.Seq import Seq
 from BCBio import GFF
 import pprint
 from BCBio.GFF import GFFExaminer
 import os
 import sys, getopt
+
+#######################################################################################
+### ORF correction of hybrid genome assemblies using short-read assembly annotation ###
+#######################################################################################
 
 fasta_file = ''
 gff_file = ''
@@ -29,10 +34,7 @@ for opt, arg in opts:
     elif opt in ("-t", "--threshold"):
         t = int(arg)
 
-
-#############################################################################
-### ORF correction of bacterial genomes using short and hybrid assemblies ###
-#############################################################################
+os.system('mkdir blastn')
 
 ############### examining gff ###############
 # examiner = GFFExaminer()
@@ -56,6 +58,7 @@ in_handle.close()
 
 ############### makebladtdb ###############
 os.system('makeblastdb -in' +  fasta_file + ' -parse_seqids -dbtype nucl -out hybrid_blastdb')
+print('blast db generated')
 
 
 ############## find candidates ###############
@@ -133,7 +136,7 @@ for elem in candidates:
             
         up_down_pair = []
 
-os.system('rm blastn/*')
+os.system('rm -r blastn/')
 
 ### sort blast results by start position ###
 up_down_all.sort(key=lambda x: x[0][8])
@@ -143,24 +146,29 @@ for elem in up_down_all:
     h_start = int(elem[0][9]) + count
     h_end = int(elem[1][8]) + count
 
-    if h_start > h_end: h_start, h_end = h_end, h_start
-
     start = elem[2][2].start
     end = elem[2][2].end
 
     h_len = abs(h_end - h_start -1)
     sr_gene_len = end - start +1
 
+    sr_gene = elem[2][0].seq[start:end+1]
+
+    ### if downstream < upstream: change variable and generate reverse complement ###
+    if h_start > h_end:
+        h_start, h_end = h_end, h_start
+        sr_gene = str(Seq(sr_gene).reverse_complement())
+
     ### filtering by length (20% longer or shorter than gene allowed) ###
     if abs(h_len - sr_gene_len) < sr_gene_len * 0.2:
-        sr_gene = elem[2][0].seq[start:end+1]
-
         ### insert short-read gene in hybrid sequence ###
         hybrid_fasta[elem[0][1]].seq = hybrid_fasta[elem[0][1]].seq[:h_start+1] + sr_gene + hybrid_fasta[elem[0][1]].seq[h_end:]
 
         ### update index count ###
-        if sr_gene_len != h_len:
-            count += sr_gene_len - h_len
+        if sr_gene_len != h_len: count += sr_gene_len - h_len
+        
+        ### print ###
+        print(elem[2][1], h_start+1, h_end-1)
 
 
 ############## save new assembly ###############
