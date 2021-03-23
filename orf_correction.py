@@ -57,7 +57,7 @@ in_handle.close()
 
 
 ############### makebladtdb ###############
-os.system('makeblastdb -in' +  fasta_file + ' -parse_seqids -dbtype nucl -out hybrid_blastdb')
+os.system('makeblastdb -in ' +  fasta_file + ' -parse_seqids -dbtype nucl -out hybrid_blastdb')
 print('blast db generated')
 
 
@@ -132,7 +132,9 @@ for elem in candidates:
         
         ### continue if up and downstream region matched ###
         if len(up_down_pair) == 2 and up_down_pair[0][1] == up_down_pair[1][1] and int(up_down_pair[0][3]) == t and int(up_down_pair[1][3]) == t:
-            up_down_all.append((up_down_pair[0], up_down_pair[1], elem))
+            k = up_down_pair[0][0:2] + list(map(float, up_down_pair[0][2:]))
+            l = up_down_pair[1][0:2] + list(map(float, up_down_pair[1][2:]))
+            up_down_all.append((k, l, elem))
             
         up_down_pair = []
 
@@ -157,7 +159,7 @@ for elem in up_down_all:
     ### if downstream < upstream: change variable and generate reverse complement ###
     if h_start > h_end:
         h_start, h_end = h_end, h_start
-        sr_gene = str(Seq(sr_gene).reverse_complement())
+        sr_gene = sr_gene.reverse_complement()
 
     ### filtering by length (20% longer or shorter than gene allowed) ###
     if abs(h_len - sr_gene_len) < sr_gene_len * 0.2:
