@@ -12,11 +12,8 @@ import sys, getopt
 ### ORF correction of hybrid genome assemblies using short-read assembly annotation ###
 #######################################################################################
 
-fasta_file = ''
-gff_file = ''
-outputdir = ''
-prefix = ''
-t = 100
+fasta_file, gff_file, outputdir, prefix, t = '', '', '', '', 50
+
 
 try:
     opts, args = getopt.getopt(sys.argv[1:],"hf:g:t:o:p:",["fasta=","gff=", "threshold=", "outputdir=", "prefix="])
@@ -38,12 +35,12 @@ for opt, arg in opts:
     elif opt in ("-t", "--threshold"):
         t = int(arg)
 
-os.system('mkdir blastn')
+if not outputdir[-1] == '/': outputdir += '/'
+if prefix.split('.')[-1] == 'fa' or prefix.split('.')[-1] == 'fasta':
+    ''.join(prefix.split('.')[:-1])
 
-############### examining gff ###############
-# examiner = GFFExaminer()
-# pprint.pprint(examiner.available_limits(in_handle))
-# in_handle.close()
+os.system('mkdir ' + outputdir)
+os.system('mkdir '+ outputdir + 'blastn')
 
 
 ############## load fasta ###############
@@ -61,18 +58,18 @@ in_handle.close()
 
 
 ############### makebladtdb ###############
-os.system('makeblastdb -in ' +  fasta_file + ' -parse_seqids -dbtype nucl -out hybrid_blastdb')
+os.system('makeblastdb -in ' +  fasta_file + ' -parse_seqids -dbtype nucl -out ' + outputdir + 'hybrid_blastdb')
 
 
 ############## find candidates ###############
 candidates = []
 for node in gff:
-    id = node.id
+    # id = node.id
     seq = node.seq
     for feature in node.features:
         start = feature.location.start
         end = feature.location.end
-        strand = feature.location.strand
+        # strand = feature.location.strand
         feature_seq = seq[start:end+1]
         feature_id = feature.id
         
@@ -81,10 +78,10 @@ for node in gff:
         os.system('echo ">' + feature_id + '\n' + str(feature_seq) + '" >> query.fasta')
         
         ### blastn ###
-        os.system('blastn -task blastn -outfmt 6 -max_target_seqs 1 -query query.fasta -db hybrid_blastdb -out blastn/' + feature_id + '_results.out')
+        os.system('blastn -task blastn -outfmt 6 -max_target_seqs 1 -query query.fasta -db ' + outputdir + 'hybrid_blastdb -out ' + outputdir + 'blastn/' + feature_id + '_results.out')
         os.system('rm query.fasta')
         
-        results = open('blastn/' + feature_id + '_results.out', 'r').readline().split('\t')
+        results = open(outputdir + 'blastn/' + feature_id + '_results.out', 'r').readline().split('\t')
         
         if len(results) > 1:
             pident = float(results[2])
@@ -99,7 +96,7 @@ for node in gff:
             if qcov != 1.0 or int(results[4]) != 0 or int(results[5]) != 0:
                 candidates.append([node, feature_id, feature.location, pident, qcov, scov, int(results[4]), int(results[5])])
 
-os.system('rm blastn/*')
+os.system('rm ' + outputdir + 'blastn/*')
 
 
 ############## update assembly sequence ###############
@@ -118,10 +115,10 @@ for elem in candidates:
         os.system('echo ">upstream\n' + str(upstream) + '\n>downstream\n' + str(downstream) + '" >> query.fasta')
 
         ### blastn ###
-        os.system('blastn -task blastn -max_target_seqs 1 -outfmt 6 -query query.fasta -db hybrid_blastdb -out blastn/' + elem[1] + '_results.out')
+        os.system('blastn -task blastn -max_target_seqs 1 -outfmt 6 -query query.fasta -db ' + outputdir + 'hybrid_blastdb -out ' + outputdir + 'blastn/' + elem[1] + '_results.out')
         os.system('rm query.fasta')
 
-        results = open('blastn/' + elem[1] + '_results.out', 'r').readlines()
+        results = open(outputdir + 'blastn/' + elem[1] + '_results.out', 'r').readlines()
         
         up_down_pair = [results[0].split('\t')]
         for line in results:
@@ -174,8 +171,8 @@ for elem in up_down_all:
 
 log.close()
 
-os.system('rm -r blastn/')
-os.system('rm hybrid_blastdb*')
+os.system('rm -r ' + outputdir + 'blastn/')
+os.system('rm ' + outputdir + 'hybrid_blastdb*')
 
 ############## save new assembly ###############
 with open(outputdir + prefix + '.fasta', 'w') as handle:
