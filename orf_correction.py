@@ -14,23 +14,27 @@ import sys, getopt
 
 fasta_file = ''
 gff_file = ''
+outputdir = ''
+prefix = ''
 t = 100
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:],"hf:g:t:o:",["fasta=","gff=", "threshold=", "output="])
+    opts, args = getopt.getopt(sys.argv[1:],"hf:g:t:o:p:",["fasta=","gff=", "threshold=", "outputdir=", "prefix="])
 except getopt.GetoptError:
-    print('orf_correction.py -f <fasta file> -g <gff file> -t <threshold for up-/downstream region> -o <output file>')
+    print('orf_correction.py -f <fasta file> -g <gff file> -t <threshold for up-/downstream region> -p <prefix of output> -o <output directory>')
     sys.exit(2)
 for opt, arg in opts:
     if opt == '-h':
-        print('orf_correction.py -f <fasta file> -g <gff file> -t <threshold for up-/downstream region> -o <output file>')
+        print('orf_correction.py -f <fasta file> -g <gff file> -t <threshold for up-/downstream region> -p <prefix of output> -o <output directory>')
         sys.exit()
     elif opt in ("-f", "--fasta"):
         fasta_file = arg
     elif opt in ("-g", "--gff"):
         gff_file = arg
-    elif opt in ("-o", "--output"):
-        output = arg
+    elif opt in ("-o", "--outputdir"):
+        outputdir = arg
+    elif opt in ("-p", "--prefix"):
+        prefix = arg
     elif opt in ("-t", "--threshold"):
         t = int(arg)
 
@@ -42,7 +46,7 @@ os.system('mkdir blastn')
 # in_handle.close()
 
 
-############## load fasta ############### 
+############## load fasta ###############
 hybrid_fasta = SeqIO.to_dict(SeqIO.parse(fasta_file, "fasta"))
 
 
@@ -58,12 +62,9 @@ in_handle.close()
 
 ############### makebladtdb ###############
 os.system('makeblastdb -in ' +  fasta_file + ' -parse_seqids -dbtype nucl -out hybrid_blastdb')
-print('blast db generated')
 
 
 ############## find candidates ###############
-# outfile = open('outfile', 'w')
-# outfile.write('contig\tid\tid_pos\tipdent\tqcov\tscov\tmm\tgap\n')
 candidates = []
 for node in gff:
     id = node.id
@@ -96,10 +97,8 @@ for node in gff:
 
             #### filter candidates ###
             if qcov != 1.0 or int(results[4]) != 0 or int(results[5]) != 0:
-                #outfile.write(id + '\t' + feature_id + '\t' + str(feature.location) + '\t' + str(pident) + '\t' + str(qcov) + '\t' + str(scov) + '\t' + str(results[4]) + '\t' + str(results[5]) + '\n')
                 candidates.append([node, feature_id, feature.location, pident, qcov, scov, int(results[4]), int(results[5])])
 
-#outfile.close()
 os.system('rm blastn/*')
 
 
@@ -138,12 +137,13 @@ for elem in candidates:
             
         up_down_pair = []
 
-os.system('rm -r blastn/')
 
 ### sort blast results by start position ###
 up_down_all.sort(key=lambda x: x[0][8])
 
 count = 0
+log = open(outputdir + prefix + '.logfile', 'w')
+log.write('short-read assembly prokka id\tstart\tend\told sequence\tnew sequence\n')
 for elem in up_down_all:
     h_start = int(elem[0][9]) + count
     h_end = int(elem[1][8]) + count
@@ -169,10 +169,14 @@ for elem in up_down_all:
         ### update index count ###
         if sr_gene_len != h_len: count += sr_gene_len - h_len
         
-        ### print ###
-        print(elem[2][1], h_start+1, h_end-1)
+        ### write logfile ###
+        log.write(elem[2][1] + '\t' + str(h_start+1) + '\t' + str(h_end-1) + '\t' + str(hybrid_fasta[elem[0][1]].seq[h_start+1:h_end]) + '\t' + str(sr_gene) + '\n')
 
+log.close()
+
+os.system('rm -r blastn/')
+os.system('rm hybrid_blastdb*')
 
 ############## save new assembly ###############
-with open(output, 'w') as handle:
+with open(outputdir + prefix + '.fasta', 'w') as handle:
     SeqIO.write(hybrid_fasta.values(), handle, 'fasta')
