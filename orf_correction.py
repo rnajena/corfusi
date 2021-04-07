@@ -12,7 +12,7 @@ import sys, getopt
 ### ORF correction of hybrid genome assemblies using short-read assembly annotation ###
 #######################################################################################
 
-fasta_file, gff_file, outputdir, prefix, t = '', '', '', '', 50
+fasta_file, gff_file, outputdir, prefix, t = '', '', './', '', 50
 
 
 try:
@@ -63,10 +63,13 @@ os.system('makeblastdb -in ' +  fasta_file + ' -parse_seqids -dbtype nucl -out '
 
 ############## find candidates ###############
 candidates = []
+os.system('touch query.fasta')
+count = 0
 for node in gff:
     # id = node.id
     seq = node.seq
     for feature in node.features:
+        count += 1
         start = feature.location.start
         end = feature.location.end
         # strand = feature.location.strand
@@ -74,28 +77,30 @@ for node in gff:
         feature_id = feature.id
         
         ### create query ###
-        os.system('touch query.fasta')
-        os.system('echo ">' + feature_id + '\n' + str(feature_seq) + '" >> query.fasta')
+        #os.system('touch query.fasta')
+        os.system('echo ">' + feature_id + '\n' + str(feature_seq) + '"  >> query.fasta')
+print(count)
         
         ### blastn ###
-        os.system('blastn -task blastn -outfmt 6 -max_target_seqs 1 -query query.fasta -db ' + outputdir + 'hybrid_blastdb -out ' + outputdir + 'blastn/' + feature_id + '_results.out')
-        os.system('rm query.fasta')
+        #os.system('blastn -task blastn -outfmt 6 -max_target_seqs 1 -query query.fasta -db ' + outputdir + 'hybrid_blastdb -out ' + outputdir + 'blastn/' + feature_id + '_results.out')
+        #os.system('rm query.fasta')
         
-        results = open(outputdir + 'blastn/' + feature_id + '_results.out', 'r').readline().split('\t')
+        #results = open(outputdir + 'blastn/' + feature_id + '_results.out', 'r').readline().split('\t')
+
+os.system('blastn -task blastn -outfmt 6 -max_target_seqs 1 -culling_limit 1 -evalue 0.01 -query query.fasta -db ' + outputdir + 'hybrid_blastdb -out ' + outputdir + 'blastn/' + 'results.out')
+        #if len(results) > 1:
+        #    pident = float(results[2])
+        #else: pident = 0
         
-        if len(results) > 1:
-            pident = float(results[2])
-        else: pident = 0
-        
-        if pident > 90:
-            length = int(results[3])
-            qcov = length / (int(results[7]) - int(results[6]) + 1)
-            scov = length /(int(results[9]) - int(results[8]) + 1)
+        #if pident > 90:
+        #    length = int(results[3])
+        #    qcov = length / (int(results[7]) - int(results[6]) + 1)
+        #    scov = length /(int(results[9]) - int(results[8]) + 1)
 
             #### filter candidates ###
-            if qcov != 1.0 or int(results[4]) != 0 or int(results[5]) != 0:
-                candidates.append([node, feature_id, feature.location, pident, qcov, scov, int(results[4]), int(results[5])])
-                print(feature_id)
+        #    if qcov != 1.0 or int(results[4]) != 0 or int(results[5]) != 0:
+        #        candidates.append([node, feature_id, feature.location, pident, qcov, scov, int(results[4]), int(results[5])])
+        #        print(feature_id)
 
 # os.system('rm ' + outputdir + 'blastn/*')
 
