@@ -80,7 +80,7 @@ for node in gff:
 
         
         ### blastn ###
-        os.system('blastn -task blastn -outfmt 6 -max_target_seqs 1 -culling_limit 1 -query query.fasta -db ' + outputdir + 'hybrid_blastdb -out ' + outputdir + 'blastn/' + feature_id + '_results.out')
+        os.system('blastn -task blastn -outfmt 6 -max_target_seqs 1 -culling_limit 1 -query query.fasta -db ' + outputdir + 'hybrid_blastdb -out ' + outputdir + 'blastn/' + feature_id + '_results.out 2>/dev/null')
         os.system('rm query.fasta')
         
         results = open(outputdir + 'blastn/' + feature_id + '_results.out', 'r').readline().split('\t')
@@ -118,7 +118,7 @@ for elem in candidates:
         os.system('echo ">upstream\n' + str(upstream) + '\n>downstream\n' + str(downstream) + '" >> query.fasta')
 
         ### blastn ###
-        os.system('blastn -task blastn -max_target_seqs 1 -outfmt 6 -query query.fasta -db ' + outputdir + 'hybrid_blastdb -out ' + outputdir + 'blastn/' + elem[1] + '_results.out')
+        os.system('blastn -task blastn -max_target_seqs 1 -outfmt 6 -culling_limit 1 -query query.fasta -db ' + outputdir + 'hybrid_blastdb -out ' + outputdir + 'blastn/' + elem[1] + '_results.out 2>/dev/null')
         os.system('rm query.fasta')
 
         results = open(outputdir + 'blastn/' + elem[1] + '_results.out', 'r').readlines()
@@ -142,7 +142,7 @@ for elem in candidates:
 up_down_all.sort(key=lambda x: x[0][8])
 
 count = 0
-log = open(outputdir + prefix + '.logfile', 'w')
+log = open(outputdir + prefix + '_log.tsv', 'w')
 log.write('short-read assembly prokka id\tstart\tend\told sequence\tnew sequence\n')
 for elem in up_down_all:
     h_start = int(elem[0][9]) + count
