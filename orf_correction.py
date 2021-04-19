@@ -43,7 +43,7 @@ os.system('mkdir ' + outputdir)
 os.system('mkdir '+ outputdir + 'blastn')
 
 
-############## load fasta ###############
+############### load fasta ###############
 hybrid_fasta = SeqIO.to_dict(SeqIO.parse(fasta_file, "fasta"))
 
 
@@ -61,7 +61,7 @@ in_handle.close()
 os.system('makeblastdb -in ' +  fasta_file + ' -parse_seqids -dbtype nucl -out ' + outputdir + 'hybrid_blastdb')
 
 
-############## find candidates ###############
+############### find candidates ###############
 candidates = []
 
 for node in gff:
@@ -102,8 +102,9 @@ for node in gff:
 os.system('rm ' + outputdir + 'blastn/*')
 
 
-# ############## update assembly sequence ###############
+############### filtering with blast upstream and downstream region ###############
 up_down_all = []
+
 for elem in candidates:
     ### extract up and downstream region ###
     start = int(elem[2].start)
@@ -137,13 +138,15 @@ for elem in candidates:
             
         up_down_pair = []
 
-
 ### sort blast results by start position ###
 up_down_all.sort(key=lambda x: x[0][8])
 
+
+############### update assembly sequence ###############
 count = 0
 log = open(outputdir + prefix + '_log.tsv', 'w')
 log.write('short-read assembly prokka id\tstart\tend\told sequence\tnew sequence\n')
+
 for elem in up_down_all:
     h_start = int(elem[0][9]) + count
     h_end = int(elem[1][8]) + count
@@ -176,6 +179,7 @@ log.close()
 
 os.system('rm -r ' + outputdir + 'blastn/')
 os.system('rm ' + outputdir + 'hybrid_blastdb*')
+
 
 ############## save new assembly ###############
 with open(outputdir + prefix + '.fasta', 'w') as handle:
