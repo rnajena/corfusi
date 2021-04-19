@@ -97,7 +97,6 @@ for node in gff:
             ### filter candidates ###
            if qcov != 1.0 or int(results[4]) != 0 or int(results[5]) != 0:
                candidates.append([node, feature_id, feature.location, pident, qcov, scov, int(results[4]), int(results[5])])
-               print(feature_id)
 
 os.system('rm ' + outputdir + 'blastn/*')
 
