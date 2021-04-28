@@ -39,7 +39,7 @@ if not outputdir[-1] == '/': outputdir += '/'
 if prefix.split('.')[-1] == 'fa' or prefix.split('.')[-1] == 'fasta':
     ''.join(prefix.split('.')[:-1])
 
-os.system('mkdir ' + outputdir)
+if not os.path.isdir(outputdir): os.system('mkdir ' + outputdir)
 os.system('mkdir '+ outputdir + 'blastn')
 
 
@@ -58,7 +58,7 @@ in_handle.close()
 
 
 ############### makebladtdb ###############
-os.system('makeblastdb -in ' +  fasta_file + ' -parse_seqids -dbtype nucl -out ' + outputdir + 'hybrid_blastdb')
+os.system('makeblastdb -in ' +  fasta_file + ' -parse_seqids -dbtype nucl -out ' + outputdir + 'hybrid_blastdb >/dev/null')
 
 
 ############### find candidates ###############
@@ -71,13 +71,12 @@ for node in gff:
         start = feature.location.start
         end = feature.location.end
         # strand = feature.location.strand
-        feature_seq = seq[start:end+1]
+        feature_seq = seq[start:end]
         feature_id = feature.id
         
         ### create query ###
         os.system('touch query.fasta')
         os.system('echo ">' + feature_id + '\n' + str(feature_seq) + '"  >> query.fasta')
-
         
         ### blastn ###
         os.system('blastn -task blastn -outfmt 6 -max_target_seqs 1 -culling_limit 1 -query query.fasta -db ' + outputdir + 'hybrid_blastdb -out ' + outputdir + 'blastn/' + feature_id + '_results.out 2>/dev/null')
@@ -100,7 +99,6 @@ for node in gff:
 
 os.system('rm ' + outputdir + 'blastn/*')
 
-
 ############### filtering with blast upstream and downstream region ###############
 up_down_all = []
 
@@ -109,8 +107,10 @@ for elem in candidates:
     start = int(elem[2].start)
     end = int(elem[2].end)
     upstream = elem[0].seq[start-t:start]
-    downstream = elem[0].seq[end+1:end+t+1]
+    downstream = elem[0].seq[end:end+t]
+
     
+
     ### check length of up and downstream region ###
     if len(upstream) == t and len(downstream) == t:
         ### create query ###
@@ -128,7 +128,7 @@ for elem in candidates:
             if line[0:10] == 'downstream':
                 up_down_pair.append(line.split('\t'))
                 break
-        
+
         ### continue if up and downstream region matched ###
         if len(up_down_pair) == 2 and up_down_pair[0][1] == up_down_pair[1][1] and int(up_down_pair[0][3]) == t and int(up_down_pair[1][3]) == t:
             k = up_down_pair[0][0:2] + list(map(float, up_down_pair[0][2:]))
@@ -147,32 +147,44 @@ log = open(outputdir + prefix + '_log.tsv', 'w')
 log.write('short-read assembly prokka id\tstart\tend\told sequence\tnew sequence\n')
 
 for elem in up_down_all:
-    h_start = int(elem[0][9]) + count
-    h_end = int(elem[1][8]) + count
-
     start = elem[2][2].start
     end = elem[2][2].end
 
-    h_len = abs(h_end - h_start -1)
-    sr_gene_len = end - start +1
+    sr_gene = elem[2][0].seq[start:end]
 
-    sr_gene = elem[2][0].seq[start:end+1]
+    up_s = int(elem[0][8])
+    up_e = int(elem[0][9])
+    down_s = int(elem[1][8])
+    down_e = int(elem[1][9])
 
-    ### if downstream < upstream: change variable and generate reverse complement ###
-    if h_start > h_end:
-        h_start, h_end = h_end, h_start
+    if up_s < down_s: ### upstream < downstream: define variables ###
+        if up_s < up_e: h_start = up_e + count
+        else: h_start = up_s + count
+        if down_s < down_e: h_end = down_s + count
+        else: h_end = down_e + count
+    else: ### downstream < upstream: define variables and generate reverse complement ###
+        if down_s < down_e: h_start = down_e + count
+        else: h_start = down_s + count
+        if up_s < up_e: h_end = up_s + count
+        else: h_end = up_e + count
         sr_gene = sr_gene.reverse_complement()
+
+    old = hybrid_fasta[elem[0][1]].seq[h_start:h_end]
+
+    h_len = len(old)
+    sr_gene_len = len(sr_gene)
 
     ### filtering by length (20% longer or shorter than gene allowed) ###
     if abs(h_len - sr_gene_len) < sr_gene_len * 0.2:
         ### insert short-read gene in hybrid sequence ###
-        hybrid_fasta[elem[0][1]].seq = hybrid_fasta[elem[0][1]].seq[:h_start+1] + sr_gene + hybrid_fasta[elem[0][1]].seq[h_end:]
+        hybrid_fasta[elem[0][1]].seq = hybrid_fasta[elem[0][1]].seq[:h_start] + sr_gene + hybrid_fasta[elem[0][1]].seq[h_end:]
 
         ### update index count ###
         if sr_gene_len != h_len: count += sr_gene_len - h_len
-        
+
+        print(h_start, h_end)
         ### write logfile ###
-        log.write(elem[2][1] + '\t' + str(h_start+1) + '\t' + str(h_end-1) + '\t' + str(hybrid_fasta[elem[0][1]].seq[h_start+1:h_end]) + '\t' + str(sr_gene) + '\n')
+        log.write(elem[2][1] + '\t' + str(h_start+1) + '\t' + str(h_end+(sr_gene_len - h_len)) + '\t' + str(old) + '\t' + str(sr_gene) + '\n')
 
 log.close()
 
