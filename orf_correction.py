@@ -88,14 +88,12 @@ for node in gff:
            pident = float(results[2])
         else: pident = 0
 
-        if pident > 90:
-           length = int(results[3])
-           qcov = length / (abs(int(results[7]) - int(results[6])) + 1)
-           scov = length /(abs(int(results[9]) - int(results[8])) + 1)
+        length = int(results[3])
+        qcov = length / (abs(int(results[7]) - int(results[6])) + 1)
+        scov = length /(abs(int(results[9]) - int(results[8])) + 1)
 
-            ### filter candidates ###
-           if (qcov != 1.0 or int(results[4]) != 0 or int(results[5]) != 0) and length >= 0.8 * (end-start+1) and length <= 1.2 * (end-start+1):
-               candidates.append([node, feature_id, feature.location, pident, qcov, scov, int(results[4]), int(results[5])])
+        if pident > 90 and pident < 100 and length >= 0.8 * (end-start+1) and length <= 1.2 * (end-start+1): # and (qcov != 1.0 or int(results[4]) != 0 or int(results[5]) != 0)
+            candidates.append([node, feature_id, feature.location, pident, qcov, scov, int(results[4]), int(results[5])])
 
         if pident == 100: yes += 1
         else: no += 1
