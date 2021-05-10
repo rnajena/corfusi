@@ -14,7 +14,6 @@ import sys, getopt
 
 fasta_file, gff_file, outputdir, prefix, t = '', '', './', '', 50
 
-
 try:
     opts, args = getopt.getopt(sys.argv[1:],"hf:g:t:o:p:",["fasta=","gff=", "threshold=", "outputdir=", "prefix="])
 except getopt.GetoptError:
@@ -63,6 +62,7 @@ os.system('makeblastdb -in ' +  fasta_file + ' -parse_seqids -dbtype nucl -out '
 
 ############### find candidates ###############
 candidates = []
+yes, no = 0,0
 
 for node in gff:
     # id = node.id
@@ -87,17 +87,21 @@ for node in gff:
         if len(results) > 1:
            pident = float(results[2])
         else: pident = 0
-        
+
         if pident > 90:
            length = int(results[3])
-           qcov = length / (int(results[7]) - int(results[6]) + 1)
-           scov = length /(int(results[9]) - int(results[8]) + 1)
+           qcov = length / (abs(int(results[7]) - int(results[6])) + 1)
+           scov = length /(abs(int(results[9]) - int(results[8])) + 1)
 
             ### filter candidates ###
-           if qcov != 1.0 or int(results[4]) != 0 or int(results[5]) != 0:
+           if (qcov != 1.0 or int(results[4]) != 0 or int(results[5]) != 0) and length >= 0.8 * (end-start+1) and length <= 1.2 * (end-start+1):
                candidates.append([node, feature_id, feature.location, pident, qcov, scov, int(results[4]), int(results[5])])
 
+        if pident == 100: yes += 1
+        else: no += 1
+
 os.system('rm ' + outputdir + 'blastn/*')
+
 
 ############### filtering with blast upstream and downstream region ###############
 up_down_all = []
@@ -108,8 +112,6 @@ for elem in candidates:
     end = int(elem[2].end)
     upstream = elem[0].seq[start-t:start]
     downstream = elem[0].seq[end:end+t]
-
-    
 
     ### check length of up and downstream region ###
     if len(upstream) == t and len(downstream) == t:
@@ -122,7 +124,7 @@ for elem in candidates:
         os.system('rm query.fasta')
 
         results = open(outputdir + 'blastn/' + elem[1] + '_results.out', 'r').readlines()
-        
+
         up_down_pair = [results[0].split('\t')]
         for line in results:
             if line[0:10] == 'downstream':
@@ -136,6 +138,7 @@ for elem in candidates:
             up_down_all.append((k, l, elem))
             
         up_down_pair = []
+
 
 ### sort blast results by start position ###
 up_down_all.sort(key=lambda x: x[0][8])
@@ -182,7 +185,6 @@ for elem in up_down_all:
         ### update index count ###
         if sr_gene_len != h_len: count += sr_gene_len - h_len
 
-        print(h_start, h_end)
         ### write logfile ###
         log.write(elem[2][1] + '\t' + str(h_start+1) + '\t' + str(h_end+(sr_gene_len - h_len)) + '\t' + str(old) + '\t' + str(sr_gene) + '\n')
 
@@ -195,3 +197,6 @@ os.system('rm ' + outputdir + 'hybrid_blastdb*')
 ############## save new assembly ###############
 with open(outputdir + prefix + '.fasta', 'w') as handle:
     SeqIO.write(hybrid_fasta.values(), handle, 'fasta')
+
+print("ORF correction process complete!\n" + "Assembly " + prefix + ".fasta saved in " + outputdir + "\nThank you for using our Tool!")
+print("number 100% matches: ", yes, "\nnumber of incorrect matches: ", no)
