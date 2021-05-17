@@ -7,6 +7,7 @@ import pprint
 from BCBio.GFF import GFFExaminer
 import os
 import sys, getopt
+import time
 
 #######################################################################################
 ### ORF correction of hybrid genome assemblies using short-read assembly annotation ###
@@ -41,6 +42,7 @@ if prefix.split('.')[-1] == 'fa' or prefix.split('.')[-1] == 'fasta':
 if not os.path.isdir(outputdir): os.system('mkdir ' + outputdir)
 os.system('mkdir '+ outputdir + 'blastn')
 
+time_start = time.process_time()
 
 ############### load fasta ###############
 hybrid_fasta = SeqIO.to_dict(SeqIO.parse(fasta_file, "fasta"))
@@ -65,16 +67,14 @@ candidates = []
 yes, no = 0,0
 
 for node in gff:
-    # id = node.id
     seq = node.seq
     for feature in node.features:
         start = feature.location.start
         end = feature.location.end
-        # strand = feature.location.strand
         feature_seq = seq[start:end]
         feature_id = feature.id
         
-        ### create query ###
+        ### create query ##
         os.system('touch query.fasta')
         os.system('echo ">' + feature_id + '\n' + str(feature_seq) + '"  >> query.fasta')
         
@@ -89,15 +89,15 @@ for node in gff:
            length = int(results[3])
         else: pident = 0
 
-        if pident > 90 and pident < 100 and length >= 0.8 * (end-start+1) and length <= 1.2 * (end-start+1): # and (qcov != 1.0 or int(results[4]) != 0 or int(results[5]) != 0)
-            qcov = length / (abs(int(results[7]) - int(results[6])) + 1)
-            scov = length /(abs(int(results[9]) - int(results[8])) + 1)
-            candidates.append([node, feature_id, feature.location, pident, qcov, scov, int(results[4]), int(results[5])])
+        if pident > 90 and pident < 100 and abs(length - len(feature_seq)) <= 0.2 * len(feature_seq):
+            # qcov = length / (abs(int(results[7]) - int(results[6])) + 1)
+            # scov = length /(abs(int(results[9]) - int(results[8])) + 1)
+            candidates.append([node, feature_id, feature.location]) #, pident, qcov, scov, int(results[4]), int(results[5])])
 
         if pident == 100: yes += 1
         else: no += 1
 
-os.system('rm ' + outputdir + 'blastn/*')
+#os.system('rm ' + outputdir + 'blastn/*')
 
 
 ############### filtering with blast upstream and downstream region ###############
@@ -144,7 +144,7 @@ up_down_all.sort(key=lambda x: x[0][8])
 ############### update assembly sequence ###############
 count = 0
 log = open(outputdir + prefix + '_log.tsv', 'w')
-log.write('short-read assembly prokka id\tstart\tend\told sequence\tnew sequence\n')
+log.write('annotation_ID\tstart\tend\told sequence\tnew sequence\n')
 
 for elem in up_down_all:
     start = elem[2][2].start
@@ -195,5 +195,7 @@ os.system('rm ' + outputdir + 'hybrid_blastdb*')
 with open(outputdir + prefix + '.fasta', 'w') as handle:
     SeqIO.write(hybrid_fasta.values(), handle, 'fasta')
 
-print("ORF correction process complete!\n" + "Assembly " + prefix + ".fasta saved in " + outputdir + "\nThank you for using our Tool!")
-print("number 100% matches: ", yes, "\nnumber of incorrect matches: ", no)
+print("ORF correction process complete!\n" + "Assembly " + prefix + ".fasta saved in " + outputdir)
+print("Number 100% matches: ", yes, "\nNumber of incorrect matches: ", no)
+print("Time: ", time.process_time() - time_start)
+print("Thank you for using our Tool!")
