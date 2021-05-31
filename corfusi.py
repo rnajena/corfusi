@@ -10,19 +10,36 @@ import sys, getopt
 import time
 
 #######################################################################################
-### ORF correction of hybrid genome assemblies using short-read assembly annotation ###
+############ cORFusi - correction of ORFs utilizing short-read information ############
 #######################################################################################
 
 fasta_file, gff_file, outputdir, prefix, t = '', '', './', '', 50
 
+help = """cORFusi - correction of ORFs utilizing short-read information
+usage: python corfusi.py -f ASSEMBLY -g ANNOTATION -t INT -p NAME -o PATH
+
+Parameters:
+-h          show this message and exit
+-f assembly, --fasta assembly
+            assembly file (.fasta)
+-g annotation, -gff annotation
+            annotation file (.gff)
+-t int, --threshold int
+            length threshold determing up- & downstream region
+-p name, --prefix name
+            prefix for output files
+-o path, --outdir path
+            path to output folder
+"""
+
 try:
-    opts, args = getopt.getopt(sys.argv[1:],"hf:g:t:o:p:",["fasta=","gff=", "threshold=", "outputdir=", "prefix="])
+    opts, args = getopt.getopt(sys.argv[1:],"hf:g:t:o:p:",["fasta=","gff=", "threshold=", "outdir=", "prefix="])
 except getopt.GetoptError:
-    print('orf_correction.py -f <fasta file> -g <gff file> -t <threshold for up-/downstream region> -p <prefix of output> -o <output directory>')
+    print(help)
     sys.exit(2)
 for opt, arg in opts:
     if opt == '-h':
-        print('orf_correction.py -f <fasta file> -g <gff file> -t <threshold for up-/downstream region> -p <prefix of output> -o <output directory>')
+        print(help)
         sys.exit()
     elif opt in ("-f", "--fasta"):
         fasta_file = arg
@@ -42,7 +59,8 @@ if prefix.split('.')[-1] == 'fa' or prefix.split('.')[-1] == 'fasta':
 if not os.path.isdir(outputdir): os.system('mkdir ' + outputdir)
 os.system('mkdir '+ outputdir + 'blastn')
 
-time_start = time.process_time()
+# time_start = time.process_time()
+
 
 ############### load fasta ###############
 hybrid_fasta = SeqIO.to_dict(SeqIO.parse(fasta_file, "fasta"))
@@ -97,7 +115,7 @@ for node in gff:
         if pident == 100: yes += 1
         else: no += 1
 
-#os.system('rm ' + outputdir + 'blastn/*')
+# os.system('rm ' + outputdir + 'blastn/*')
 
 
 ############### filtering with blast upstream and downstream region ###############
@@ -197,5 +215,5 @@ with open(outputdir + prefix + '.fasta', 'w') as handle:
 
 print("ORF correction process complete!\n" + "Assembly " + prefix + ".fasta saved in " + outputdir)
 print("Number 100% matches: ", yes, "\nNumber of incorrect matches: ", no)
-print("Time: ", time.process_time() - time_start)
-print("Thank you for using our Tool!")
+# print("Time: ", time.process_time() - time_start)
+print("Thank you for using cORFusi!")
