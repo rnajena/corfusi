@@ -13,20 +13,22 @@ import time
 fasta_file, gff_file, outputdir, prefix, t = '', '', './', '', 50
 
 help = """cORFusi - correction of ORFs utilizing short-read information
-usage: python corfusi.py -f ASSEMBLY -g ANNOTATION -t INT -p NAME -o PATH
+usage: python corfusi.py -f assembly -g annotation -t int
 
-Parameters:
--h          show this message and exit
+Mandatory parameters:
+-h, --help  Show this help message and exit
 -f assembly, --fasta assembly
-            assembly file (.fasta)
+            Path to input assembly file (.fasta)
 -g annotation, -gff annotation
-            annotation file (.gff)
+            Path to input annotation file (.gff)
 -t int, --threshold int
-            length threshold determing up- & downstream region
+            Length threshold (integer) determing up- & downstream region
+
+Optional parameters:
 -p name, --prefix name
-            prefix for output files
+            Prefix for output files
 -o path, --outdir path
-            path to output folder
+            Path to output folder
 """
 
 try:
