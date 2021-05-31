@@ -14,7 +14,7 @@ This procedure determines the position of the ORF in the assembly.
 If necessary, the reverse complement of the new sequence is calculated, which corresponds to cases 3) and 4), where the downstream region matched before the upstream region.
 Finally, the sequence can be updated and the corrected assembly and corresponding log file are saved.
 
-![Simplified overview of the ORF correction workflow with cORFusi.](workflow.svg)
+![Simplified overview of the ORF correction workflow with cORFusi.](workflow.png)
 
 ## Requirements
 |Program/Package|Version|Note|
