@@ -1,10 +1,7 @@
 #!/usr/bin/python3
 
 from Bio import SeqIO
-from Bio.Seq import Seq
 from BCBio import GFF
-import pprint
-from BCBio.GFF import GFFExaminer
 import os
 import sys, getopt
 import time
