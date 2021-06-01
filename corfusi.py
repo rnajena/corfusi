@@ -164,6 +164,7 @@ log = open(outputdir + prefix + '_log.tsv', 'w')
 log.write('annotation_ID\tstart\tend\told sequence\tnew sequence\n')
 
 for elem in up_down_all:
+    h_start, h_end = 0,0
     start = elem[2][2].start
     end = elem[2][2].end
 
@@ -175,21 +176,23 @@ for elem in up_down_all:
     down_e = int(elem[1][9])
 
     if up_s < down_s: ### upstream < downstream: define variables ###
-        if up_s < up_e: h_start = up_e + count
-        else: h_start = up_s + count
-        if down_s < down_e: h_end = down_s + count
-        else: h_end = down_e + count
+        if up_s < up_e:
+            h_start = up_e + count
+        if down_s < down_e:
+            h_end = down_s + count
     else: ### downstream < upstream: define variables and generate reverse complement ###
-        if down_s < down_e: h_start = down_e + count
-        else: h_start = down_s + count
-        if up_s < up_e: h_end = up_s + count
-        else: h_end = up_e + count
+        if down_e < down_s:
+            h_start = down_s + count
+        if up_e < up_s:
+            h_end = up_e + count
         sr_gene = sr_gene.reverse_complement()
 
     old = hybrid_fasta[elem[0][1]].seq[h_start:h_end]
 
     h_len = len(old)
     sr_gene_len = len(sr_gene)
+
+    print(h_len, sr_gene_len)
 
     ### filtering by length (20% longer or shorter than gene allowed) ###
     if abs(h_len - sr_gene_len) < sr_gene_len * 0.2:
