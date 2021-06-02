@@ -35,7 +35,7 @@ cd corfusi
 
 And then create a conda environment that contains all the dependencies:
 ```bash
-conda env create -f env/corfusi.yaml
+conda env create -f conda_env/corfusi.yaml
 OR
 conda create -n corfusi python=3.6.13 blast=2.9.0 bcbio-gff=0.6.6 biopython=1.76
 
