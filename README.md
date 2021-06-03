@@ -2,17 +2,17 @@
 
 ## Summary
 ``cORFusi`` (correction of ORFs utilizing short-read information) corrects hybrid *de novo* assembled genomes using additional short-read assemblies and corresponding annotations.
-Updating gene sequences and thus correcting ORFs leads to the annotation of complete genes.
+Updating gene sequences and thus correcting ORFs can lead to the annotation of complete genes.
 Additional information regarding gene products and IDs could be added by [``Prokka``](https://github.com/tseemann/prokka) during annotation.
 
-As input, an assembly (.fasta), an annotation (.gff) and a length threshold for up- and downstream region is required.
+As input, an assembly (.fasta), an annotation (.gff), and a length threshold for up- and downstream region are required.
 The genes listed in the annotation file are searched in the assembly via ``BLAST``.
-These candidates are filtered by two criteria: 1. 90% < similarity < 100%, 2. the length of the ``BLAST`` match may deviate by a maximum of 20% from the query length, i.e. length of the CDS.
+These best-match candidates are filtered by two criteria: (1) 90% < similarity < 100%, (2) the length of the ``BLAST`` match may deviate by a maximum of 20% from the query length, i.e. length of the CDS.
 Subsequently, upstream and downstream regions are defined for each candidate using the predefined length threshold, which are then blasted against the assembly.
 Only exact matches are allowed.
 This procedure determines the position of the ORF in the assembly.
-If necessary, the reverse complement of the new sequence is calculated, which corresponds to cases 3) and 4), where the downstream region matched before the upstream region.
-Finally, the sequence can be updated and the corrected assembly and corresponding log file are saved.
+If necessary, the reverse complement of the new sequence is calculated, which corresponds to the second case, where the downstream region aligns before the upstream region.
+Finally, the sequence is updated and the corrected assembly and corresponding log file are saved.
 
 ![Simplified overview of the ORF correction workflow with cORFusi.](pics/workflow.png)
 ***Figure 1: Simplified overview of the ORF correction workflow with ``cORFusi``.***
