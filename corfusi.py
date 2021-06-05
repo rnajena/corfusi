@@ -15,8 +15,9 @@ fasta_file, gff_file, outputdir, prefix, t = '', '', './', 'corrected_assembly',
 help = """cORFusi - correction of ORFs utilizing short-read information
 usage: python corfusi.py -f assembly -g annotation -t int
 
-Mandatory parameters:
 -h, --help  Show this help message and exit
+
+Mandatory parameters:
 -f assembly, --fasta assembly
             Path to input assembly file (.fasta)
 -g annotation, -gff annotation

@@ -50,8 +50,8 @@ python corfusi.py -f assembly -g annotation -t int
 
 |Parameter|Description|
 |---------|-----------|
-|**Mandatory**|
 |**-h, --help** |Show this help message and exit|
+|**Mandatory**|
 |**-f, --fasta**|Path to input assembly file (.fasta)|   
 |**-g, --gff**|Path to input annotation file (.gff)|
 |**-t, --threshold**|Length threshold (integer) determing up- & downstream region|
