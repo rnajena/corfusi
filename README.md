@@ -12,7 +12,7 @@ Subsequently, upstream and downstream regions are defined for each candidate usi
 Only exact matches are allowed.
 This procedure determines the position of the ORF in the assembly.
 If necessary, the reverse complement of the new sequence is calculated, which corresponds to the second case, where the downstream region aligns before the upstream region.
-Finally, the sequence is updated and the corrected assembly and corresponding log file are saved.
+Finally, the genome sequence is updated in the specified regions and the corrected assembly and corresponding log file are saved.
 
 ![Simplified overview of the ORF correction workflow with cORFusi.](pics/workflow.png)
 ***Figure 1: Simplified overview of the ORF correction workflow with ``cORFusi``.***
@@ -63,7 +63,7 @@ python corfusi.py -f assembly -g annotation -t int
 ``cORFusi`` stores the output files in the current working directory, if not stated otherwise (``-o/--outdir PATH``).
 Two files are created:
 1. corrected assembly in FASTA format (edit prefix with ``-p/--prefix name``)
-2. log file in TSV format containing the annotation ID of the CDS, start and stop position of the updated sequence in the assembly, as well as the old and new sequence.
+2. log file in TSV format containing the annotation IDs of the CDSs, start and stop positions of the updated regions in the assembly, as well as the old and new sequences.
 
 **Note:** ``cORFusi`` removes the created ``BLAST`` database and tabular output files after the correction.
 
@@ -81,17 +81,17 @@ This does not mean that ``cORFusi`` is working incorrectly, but demonstrates the
 
 ![Simplified visualization of the update of the secA gene in strain 11DD0261.](pics/secA.png)
 ***Figure 2: Simplified visualization of the update of the secA gene in strain 11DD0261.*** <br>
-The secA gene of the short-read assembly was aligned with high similarity (90% < similarity < 100%)
-to the hybrid assembly, but contains mismatches or gaps. In contrast, the hybrid assembly carries two
-genes named secA_1 and secA_2 in the region where ``BLAST`` aligned the short-read CDS. Consequently,
-as mentioned above, the sequence was updated and the annotation of the corrected assembly revealed
-a complete secA gene. In addition, this example demonstrates the ability of ``cORFusi``
-to include the reverse complement of the sequence when necessary.
+The secA gene of the short-read assembly aligns with high similarity (90% < similarity < 100%) to
+the hybrid assembly, but the alignment contains mismatches or gaps. In contrast, the hybrid assembly
+carries two genes named secA_1 and secA_2 in the region where ``BLAST`` aligns the short-read CDS.
+As described above, the sequence is updated and the annotation of the corrected assembly reveals a
+complete secA gene. In addition, this example demonstrates the ability of ``cORFusi`` to
+incorporate the reverse complement of the sequence if necessary.
 
 ![Simplified visualization of the update of the atpF gene in strain 15DD0234.](pics/atpF.png)
 ***Figure 4: Simplified visualization of the update of the atpF gene in strain 15DD0234.*** <br>
-The atpF gene of the short-read assembly was aligned with high similarity (90% < similarity < 100%)
-to the hybrid assembly, but contains mismatches or gaps. In contrast, the hybrid assembly carries two
-genes named atpF_1 and atpF_2 in the region where ``BLAST`` aligned the short-read CDS. Consequently,
-as mentioned above, the sequence was updated and the annotation of the corrected assembly revealed
-a complete atpF gene.
+The atpF gene of the short-read assembly aligns with high similarity (90% < similarity < 100%) to
+the hybrid assembly, but the alignment contains mismatches or gaps. In contrast, the hybrid assembly
+carries two genes named atpF_1 and atpF_2 in the region where ``BLAST`` aligns the short-read CDS.
+As described above, the sequence is updated and the annotation of the corrected assembly reveals a
+complete atpF gene.
